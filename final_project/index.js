@@ -10,11 +10,21 @@ app.use(express.json());
 
 app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUninitialized: true}))
 
-app.use("/customer/auth/*", function auth(req,res,next){
-//Write the authenication mechanism here
+app.use("/customer/auth/*", function auth(req, res, next) {
+    const token = req.headers["authorization"];
+    if (!token) {
+        return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+    jwt.verify(token, "fingerprint_customer", (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ message: "Unauthorized: Invalid token" });
+        }
+        req.user = decoded;
+        next();
+    });
 });
  
-const PORT =5000;
+const PORT =8080;
 
 app.use("/customer", customer_routes);
 app.use("/", genl_routes);
